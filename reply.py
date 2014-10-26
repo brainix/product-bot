@@ -38,11 +38,12 @@ products = {}
 class StreamListener(tweepy.StreamListener):
     def on_data(self, data):
         print('Incoming: {0}'.format(data))
+        product_hunt = 'product hunt' in data.lower() or 'producthunt' in data.lower()
         tweet = json.loads(data)
         screen_name = tweet['user']['screen_name']
         me = screen_name == bot.SCREEN_NAME
         retweet = 'retweeted_status' in tweet
-        if not me and not retweet:
+        if not product_hunt and not me and not retweet:
             product = get_product(data)
             if product is not None:
                 reply = "@{0} Like {1}? Upvote it on #ProductHunt: {2}"
