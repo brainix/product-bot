@@ -41,4 +41,4 @@ api = tweepy.API(auth)
 
 _url = os.environ['REDISCLOUD_URL']
 _url = urlparse.urlparse(_url)
-redis = Redis(host=_url.hostname, port=_url.port, password=_url.password)
+redis = redis.Redis(host=_url.hostname, port=_url.port, password=_url.password)
