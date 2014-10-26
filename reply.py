@@ -22,6 +22,7 @@
 
 import datetime
 import json
+import urlparse
 
 import tweepy
 
@@ -50,17 +51,19 @@ def get_products():
         pass
     key = keys[-1]
 
-    products = bot.redis.hgetall(key)
-    for key, value in products.items():
-        products[key] = json.loads(value)
-    return products
+    tmp = bot.redis.hgetall(key)
+    for key, value in tmp.items():
+        key = urlparse.urlparse(key).netloc
+        value = json.loads(value)
+        tmp[key] = value
+    return tmp
 
 def main():
     listener = StreamListener()
     stream = tweepy.Stream(bot.auth, listener)
     while True:
         last_updated = datetime.datetime.now()
-        get_products()
+        products = get_products()
         stream.filter(track=products.keys())
         stream.disconnect()
 
