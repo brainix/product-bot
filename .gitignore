@@ -59,3 +59,5 @@ target/
 product-bot/
 .env
 dump.rdb
+
+config.json
