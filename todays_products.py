@@ -1,17 +1,19 @@
 import json
-import requests
 import datetime
-import pprintpp as pp
-from time import sleep
+
+import requests
 import os
+from bot import redis
+
 
 __author__ = 'rogueleaderr'
+
 
 class Post(object):
     """
     Class containing the metadata of a product post to ProductHunt
-    """ 
-    
+    """
+
     def __init__(self, post_json):
         self.comments_count = post_json["comments_count"]
         self.created_at = post_json["created_at"]
@@ -24,7 +26,11 @@ class Post(object):
         self.tagline = post_json["tagline"]
         self.user = post_json["user"]
         self.votes_count = post_json["votes_count"]
-        self.product_url = requests.get(self.redirect_url).url
+        self.screenshot_url = post_json['screenshot_url']["850px"]
+        try:
+            self.product_url = requests.get(self.redirect_url, timeout=2).url
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            self.product_url = None
 
     def __unicode__(self):
         return "{} at {}".format(self.name, self.redirect_url)
@@ -33,36 +39,54 @@ class Post(object):
         return "{} at {}".format(self.name, self.redirect_url)
 
 
+def get_auth_token(base_uri):
+    """
+    Fetch the client auth token from Redis or get a new one
+    :param base_uri:
+    :return:
+    """
 
-def get_auth_token(base, config):
-    auth = requests.post(base + '/oauth/token', data={
-        'client_id': config['client_id'],
-        'client_secret': config['client_secret'],
-        'grant_type': config['grant_type']
-    })
+    auth = redis.get("client_token")
+    if not auth:
+        auth = requests.post(base_uri + '/oauth/token', data={
+            'client_id': os.environ['PRODUCT_HUNT_CLIENT_ID'],
+            'client_secret': os.environ['PRODUCT_HUNT_CLIENT_SECRET'],
+            'grant_type': os.environ['PRODUCT_HUNT_GRANT_TYPE']
+        })
+        redis.setex("client_token", auth, 100)
     return auth
 
 
 def get_posts_for_today():
-    base = 'https://api.producthunt.com/v1'
-    this_dir = os.path.dirname(__file__)
-    with open(os.path.join(this_dir, 'config.json')) as config:
-        config = json.load(config)
+    """
+    Hit the product hunt API and create a list of Post objects corresponding to the posts from today.
 
-    auth = get_auth_token(base, config)
-
+    :return:
+    """
+    base_uri = 'https://api.producthunt.com/v1'
+    auth = get_auth_token(base_uri)
     head = {'Authorization': 'Bearer ' + auth.json()['access_token']}
+    url = '{}/posts?days_ago=0'.format(base_uri)
 
     posts_today = []
-    today = requests.get(base + '/posts?days_ago=' + str(0), headers=head)
-    today = today.json()
-    for post_json in today["posts"]:
+    response = requests.get(url, headers=head)
+    response = response.json()
+    for post_json in response["posts"]:
         posts_today.append(Post(post_json))
+
     return posts_today
 
 
 def main():
     posts_today = get_posts_for_today()
+    date = str(datetime.date.today())
+    for post in posts_today:
+        if post.product_url:  # sometimes the redirect dereference times out
+            post_info = json.dumps({"name": post.name,
+                                    "producthunt_url": post.discussion_url,
+                                    "screenshot_url": post.screenshot_url
+            })
+            redis.hset(date, post.product_url, post_info)
 
 
 if __name__ == "__main__":
