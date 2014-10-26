@@ -63,7 +63,7 @@ def main():
     stream = tweepy.Stream(bot.auth, listener)
     while True:
         last_updated = datetime.datetime.now()
-        get_products()
+        products = get_products()
         stream.filter(track=products.keys())
         stream.disconnect()
 
