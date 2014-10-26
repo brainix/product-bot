@@ -52,3 +52,10 @@ docs/_build/
 
 # PyBuilder
 target/
+
+
+
+# Raj's additions
+product-bot/
+.env
+dump.rdb
