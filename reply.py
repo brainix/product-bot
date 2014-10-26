@@ -44,7 +44,6 @@ class StreamListener(tweepy.StreamListener):
 
 
 def get_products():
-    import pdb;pdb.set_trace()
     keys = sorted(bot.redis.keys())
     try:
         keys.remove('client_token')
