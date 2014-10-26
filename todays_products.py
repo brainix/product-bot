@@ -24,6 +24,7 @@ class Post(object):
         self.tagline = post_json["tagline"]
         self.user = post_json["user"]
         self.votes_count = post_json["votes_count"]
+        self.product_url = requests.get(self.redirect_url).url
 
     def __unicode__(self):
         return "{} at {}".format(self.name, self.redirect_url)
