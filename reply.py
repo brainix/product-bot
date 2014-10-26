@@ -38,6 +38,22 @@ products = {}
 class StreamListener(tweepy.StreamListener):
     def on_data(self, data):
         print('Incoming: {0}'.format(data))
+        tweet = json.loads(data)
+        screen_name = tweet['user']['screen_name']
+        me = screen_name == bot.SCREEN_NAME
+        retweet = 'retweeted_status' in tweet
+        if not me and not retweet:
+            product = get_product(data)
+            if product is not None:
+                reply = "{0} Like {1}? Upvote it on #ProductHunt: {2}"
+                reply = reply.format(screen_name, product['name'], product['producthunt_url'])
+                log = u'Outgoing: {0}'.format(reply)
+                print(log)
+                if bot.ENV == 'production':
+                    try:
+                        bot.api.update_status(reply, tweet['id'])
+                    except tweepy.TweepError:
+                        pass
         delta = datetime.datetime.now() - last_updated
         return delta.seconds < 10 * 60
 
@@ -57,6 +73,11 @@ def get_products():
         value = json.loads(value)
         products[key] = value
     return products
+
+def get_product(data):
+    for key in products.keys():
+        if key in data:
+            return products[key]
 
 def main():
     listener = StreamListener()
