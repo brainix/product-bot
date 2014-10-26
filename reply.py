@@ -46,7 +46,7 @@ class StreamListener(tweepy.StreamListener):
             product = get_product(data)
             if product is not None:
                 reply = "@{0} Like {1}? Upvote it on #ProductHunt: {2}"
-                reply = reply.format(screen_name, product['name'], product['producthunt_url'])
+                reply = reply.format(screen_name, product['name'].strip(), product['producthunt_url'])
                 log = u'Outgoing: {0}'.format(reply)
                 print(log)
                 if bot.ENV == 'production':
