@@ -29,6 +29,7 @@ import bot
 
 
 last_updated = datetime.datetime.now()
+products = {}
 
 
 
@@ -36,17 +37,30 @@ class StreamListener(tweepy.StreamListener):
     def on_data(self, data):
         print('Incoming: {0}'.format(data))
         delta = datetime.datetime.now() - last_updated
-        return delta.seconds < 60 * 60
+        return delta.seconds < 10 * 60
 
 
+
+def get_products():
+    keys = sorted(bot.redis.keys())
+    try:
+        keys.remove('client_token')
+    except ValueError:
+        pass
+    key = keys[-1]
+
+    products = bot.redis.hgetall(key)
+    for key, value in products.items():
+        products[key] = json.loads(value)
+    return products
 
 def main():
     listener = StreamListener()
     stream = tweepy.Stream(bot.auth, listener)
     while True:
-        # TODO: Replace bot.PHRASES with product URLs below.
-        stream.filter(track=bot.PHRASES)
         last_updated = datetime.datetime.now()
+        get_products()
+        stream.filter(track=products.keys())
         stream.disconnect()
 
 if __name__ == '__main__':
