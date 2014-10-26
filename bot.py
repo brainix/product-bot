@@ -21,7 +21,9 @@
 
 
 import os
+import urlparse
 
+import redis
 import tweepy
 
 
@@ -36,3 +38,7 @@ ACCESS_TOKEN_SECRET = os.environ['TWITTER_ACCESS_TOKEN_SECRET']
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 api = tweepy.API(auth)
+
+_url = os.environ['REDISCLOUD_URL']
+_url = urlparse.urlparse(_url)
+redis = Redis(host=_url.hostname, port=_url.port, password=_url.password)
