@@ -44,6 +44,7 @@ class StreamListener(tweepy.StreamListener):
 
 
 def get_products():
+    import pdb;pdb.set_trace()
     keys = sorted(bot.redis.keys())
     try:
         keys.remove('client_token')
@@ -55,15 +56,15 @@ def get_products():
     for key, value in tmp.items():
         key = urlparse.urlparse(key).netloc
         value = json.loads(value)
-        tmp[key] = value
-    return tmp
+        products[key] = value
+    return products
 
 def main():
     listener = StreamListener()
     stream = tweepy.Stream(bot.auth, listener)
     while True:
         last_updated = datetime.datetime.now()
-        products = get_products()
+        get_products()
         stream.filter(track=products.keys())
         stream.disconnect()
 
