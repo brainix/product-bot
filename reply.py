@@ -20,16 +20,23 @@
 
 
 
+import datetime
+
 import tweepy
 
 import bot
 
 
 
+last_updated = datetime.datetime.now()
+
+
+
 class StreamListener(tweepy.StreamListener):
     def on_data(self, data):
         print('Incoming: {0}'.format(data))
-        return True
+        delta = datetime.datetime.now() - last_updated
+        return delta.seconds < 60 * 60
 
 
 
@@ -39,6 +46,7 @@ def main():
     while True:
         # TODO: Replace bot.PHRASES with product URLs below.
         stream.filter(track=bot.PHRASES)
+        last_updated = datetime.datetime.now()
         stream.disconnect()
 
 if __name__ == '__main__':
